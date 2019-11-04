@@ -34,10 +34,12 @@ shift $((OPTIND-1))
 passed=true
 
 function recursion() {
+  base=$(dirname "$1")
   files=($(grep -Po '"\K(.*[.]itp)?(?=")' "$1"))
 
   for file in "${files[@]}"
   do
+    [ -z "$base" ] || [ "$base" = "." ] || file="$base"/"$file"
     if [ -e "$file" ] || [ -e "$GMXHOME/share/gromacs/top/$file" ]
     then
       for i in $(seq 1 $2)
@@ -47,14 +49,8 @@ function recursion() {
 
       [ -e "$file" ] || file="$GMXHOME/share/gromacs/top/$file"
       echo -e "\e[32m✔\e[39m file found: $file"
-      dir=$(pwd)
-      fname=$(echo "$file" | grep -Po '(?<=/|^)([^/]*$)')
-      newDir=$(echo "$file" | grep -Po '\K(.*)?(?=/)')
-      [ -z "$newDir" ] && newDir=$dir
-      cd "$newDir"
-      var="$(recursion "$fname" $(($2 + 1)) )"
+      var="$(recursion "$file" $(($2 + 1)))"
       [ -z "$var" ] || echo "$var"
-      cd "$dir"
     else
       echo -e "\e[31m✕\e[39m file not found: $file"
       passed=false

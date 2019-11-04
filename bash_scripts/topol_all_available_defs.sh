@@ -33,22 +33,19 @@ grep -nHPo --color=always "(?<=#ifdef ).*" "$input_file"
 
 passed=true
 
-func(){
-  files=($(grep -Po '"\K(.*[.]itp)?(?=")' $1))
+function recursion(){
+  base=$(dirname "$1")
+  files=($(grep -Po '"\K(.*[.]itp)?(?=")' "$1"))
+
   for file in "${files[@]}"
   do
+    [ -z "$base" ] || [ "$base" = "." ] || file="$base"/"$file"
     if [ -e $file ] || [ -e "$GMXHOME/share/gromacs/top/$file" ]
     then
       [ -e "$file" ] || file="$GMXHOME/share/gromacs/top/$file"
       grep -nHPo --color=always "(?<=#ifdef ).*" "$file"
-      dir=$(pwd)
-      fname=$(echo "$file" | grep -Po '(?<=/|^)([^/]*$)')
-      newDir=$(echo "$file" | grep -Po '\K(.*)?(?=/)')
-      [ -z $newDir ] && newDir=$dir
-      cd $newDir
-      var=$(echo $(func $fname))
+      var="$(recursion "$file")"
       [ -z "$var" ] || echo "$var"
-      cd $dir
     else
         echo -e "\e[31m✕\e[39m file not found: $file"
         passed=false
@@ -56,7 +53,7 @@ func(){
   done
 }
 
-func "$input_file"
+recursion "$input_file"
 
 if $passed
 then
