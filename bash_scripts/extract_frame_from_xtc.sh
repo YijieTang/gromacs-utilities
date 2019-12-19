@@ -9,7 +9,9 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
 # Initialize our own variables:
 input_file=""
-verbose=0
+time=""
+pymol_load=""
+new_name=""
 
 while getopts "h?i:t:a:n:" opt; do
     case "$opt" in
